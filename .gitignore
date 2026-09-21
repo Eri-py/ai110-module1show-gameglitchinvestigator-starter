@@ -13,6 +13,9 @@ ENV/
 .eggs/
 pip-wheel-metadata/
 
+# Local lockfile from optional tools (project itself isn't locked to any one)
+uv.lock
+
 # Environment and config
 .env
 .env.*

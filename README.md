@@ -11,8 +11,11 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 🛠️ Setup
 
-1. Install dependencies: `pip install -r requirements.txt`
-2. Run the broken app: `python -m streamlit run app.py`
+1. Create and activate a virtual environment: `python -m venv .venv` then `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (macOS/Linux)
+2. Install dependencies: `pip install -e .` (or `pip install -e ".[dev]"` — see note below — to also get `pytest`)
+3. Run the broken app: `streamlit run app.py`
+
+> `pip install -e .` installs only the `[project.dependencies]` listed in `pyproject.toml`. `pytest` lives in `[dependency-groups].dev`, which plain `pip` doesn't read yet — for now just run `pip install pytest` separately, or use any pyproject-aware tool (`uv sync`, `pdm install`, `poetry install`, etc.) that does support dependency groups.
 
 ## 🕵️‍♂️ Your Mission
 
