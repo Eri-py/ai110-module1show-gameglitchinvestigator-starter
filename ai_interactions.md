@@ -41,18 +41,51 @@
 **Prompt used:**
 
 ```
-<!-- Paste the prompt you gave the AI -->
+Add professional-grade docstrings (Args/Returns) to every function in
+logic_utils.py, then check the whole project for PEP 8 compliance with
+ruff (pycodestyle E/W, pyflakes F, isort I) and fix everything it flags.
 ```
 
-**Linting output before:**
+**Linting output before** (`ruff check --select E,W,F,I .`):
 
 ```
-<!-- Paste relevant linter warnings/errors -->
+I001 [*] Import block is un-sorted or un-formatted
+  --> app.py:1:1
+   |
+ 1 | / import random
+ 2 | | import streamlit as st
+ 3 | |
+ 4 | | from logic_utils import (
+   | |_^
+   |
+help: Organize imports
+
+E501 Line too long (91 > 88)
+   --> logic_utils.py:154:89
+    |
+154 | def save_high_score(difficulty: str, score: int, file_path: str = HIGH_SCORE_FILE) -> bool:
+    |                                                                                         ^^^
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests\test_game_logic.py:1:1
+   |
+ 1 | / from logic_utils import (
+   | |_^
+   |
+help: Organize imports
+
+Found 3 errors.
+[*] 2 fixable with the `--fix` option.
 ```
 
-**Changes applied:**
+**Linting output after:**
 
-<!-- Describe what you changed based on the AI's suggestions -->
+```
+$ ruff check .
+All checks passed!
+```
+
+**Changes applied:** Ran `ruff check --fix` to auto-fix the two unsorted/unformatted import blocks (it inserted a blank line separating the stdlib `import random` from the third-party `import streamlit as st`, per isort convention). Manually wrapped `save_high_score`'s signature across two lines to get under the 88-char limit -- `ruff` flags line length but doesn't auto-wrap function signatures. Also added `ruff` as a dev dependency and a `[tool.ruff]` config block to `pyproject.toml` (scoped to `E`, `W`, `F`, `I`, line-length 88) so re-running the check later doesn't require re-typing the `--select` flags. I did *not* apply ruff's default-ruleset suggestions from an earlier unscoped run (`BLE001` "don't catch blind Exception", a pylint-style refactor suggestion for the score-clamping `if`) -- those are lint/style-opinion rules beyond plain PEP 8, and the assignment specifically asked for PEP 8 compliance, not a full pylint pass.
 
 ---
 

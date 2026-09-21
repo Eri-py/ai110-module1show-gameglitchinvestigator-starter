@@ -5,7 +5,16 @@ HIGH_SCORE_FILE = "high_scores.json"
 
 
 def get_range_for_difficulty(difficulty: str):
-    """Return (low, high) inclusive range for a given difficulty."""
+    """Return the inclusive guessing range for a difficulty level.
+
+    Args:
+        difficulty: One of "Easy", "Normal", or "Hard". Any other value
+            (including unrecognized strings) falls back to the Normal range.
+
+    Returns:
+        A ``(low, high)`` tuple of ints giving the inclusive bounds the
+        secret number is drawn from.
+    """
     if difficulty == "Easy":
         return 1, 20
     if difficulty == "Normal":
@@ -16,10 +25,24 @@ def get_range_for_difficulty(difficulty: str):
 
 
 def parse_guess(raw: str):
-    """
-    Parse user input into an int guess.
+    """Parse a player's raw text input into an integer guess.
 
-    Returns: (ok: bool, guess_int: int | None, error_message: str | None)
+    Decimal input is accepted and truncated toward zero (e.g. ``"50.9"``
+    becomes ``50``), matching Python's own ``int(float(...))`` behavior.
+    Negative numbers and arbitrarily large integers are accepted as-is;
+    nothing here enforces that the guess falls within the game's range.
+
+    Args:
+        raw: The raw string from the guess text input. ``None`` or an
+            empty string is treated as "no guess entered".
+
+    Returns:
+        A ``(ok, guess_int, error_message)`` tuple:
+            - ``ok``: ``True`` if parsing succeeded, ``False`` otherwise.
+            - ``guess_int``: the parsed integer, or ``None`` if ``ok`` is
+              ``False``.
+            - ``error_message``: a user-facing error string when ``ok`` is
+              ``False``, otherwise ``None``.
     """
     if raw is None or raw == "":
         return False, None, "Enter a guess."
@@ -36,10 +59,16 @@ def parse_guess(raw: str):
 
 
 def check_guess(guess, secret):
-    """
-    Compare guess to secret and return the outcome.
+    """Compare a guess to the secret number and classify the outcome.
 
-    Returns one of: "Win", "Too High", "Too Low"
+    Args:
+        guess: The player's parsed guess (an int; see :func:`parse_guess`).
+        secret: The secret number to compare against (an int).
+
+    Returns:
+        ``"Win"`` if the guess equals the secret, ``"Too High"`` if the
+        guess overshot it, or ``"Too Low"`` if it undershot it. Pair the
+        result with :data:`OUTCOME_MESSAGES` to get player-facing hint text.
     """
     # FIX: Refactored out of app.py and dropped the str(secret) cast that
     # made this fall into a lexicographic string comparison (AI-assisted
@@ -63,7 +92,23 @@ OUTCOME_MESSAGES = {
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
-    """Update score based on outcome and attempt number."""
+    """Compute the player's new score after one guess.
+
+    A win awards ``100 - 10 * attempt_number`` points (minimum 10), so
+    guessing correctly earlier scores more. Any wrong guess ("Too High"
+    or "Too Low") costs a flat 5 points; any other outcome leaves the
+    score unchanged.
+
+    Args:
+        current_score: The score before this guess.
+        outcome: The result of :func:`check_guess` -- ``"Win"``,
+            ``"Too High"``, or ``"Too Low"``.
+        attempt_number: The 1-based count of guesses made so far,
+            including this one.
+
+    Returns:
+        The updated score as an int.
+    """
     # FIX: Win formula no longer double-counts the attempt (was `attempt_number + 1`,
     # which under-scored every win by 10), and "Too High" no longer rewards a wrong
     # guess with +5 on even attempts — both always cost 5 points now.
@@ -82,8 +127,19 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
 def load_high_scores(file_path: str = HIGH_SCORE_FILE) -> dict:
     """Load per-difficulty high scores from a JSON file.
 
-    Returns an empty dict if the file doesn't exist yet or can't be parsed,
-    so a fresh install or a corrupted save never crashes the game.
+    A missing or corrupted file is treated as "no scores yet" rather than
+    an error, so a fresh install or a damaged save file never crashes the
+    game.
+
+    Args:
+        file_path: Path to the JSON save file. Defaults to
+            :data:`HIGH_SCORE_FILE`; tests pass a temp path here to avoid
+            touching the real save file.
+
+    Returns:
+        A dict mapping difficulty name to best score, e.g.
+        ``{"Normal": 85}``. Empty if the file is missing, unreadable, not
+        valid JSON, or its top-level value isn't an object.
     """
     if not os.path.exists(file_path):
         return {}
@@ -95,12 +151,22 @@ def load_high_scores(file_path: str = HIGH_SCORE_FILE) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def save_high_score(difficulty: str, score: int, file_path: str = HIGH_SCORE_FILE) -> bool:
-    """Save `score` as the new high score for `difficulty` if it beats the
-    current one (or none exists yet).
+def save_high_score(
+    difficulty: str, score: int, file_path: str = HIGH_SCORE_FILE
+) -> bool:
+    """Save a score as the new high score for a difficulty, if it's better.
 
-    Returns True if this was a new high score and the file was updated,
-    False otherwise.
+    Args:
+        difficulty: The difficulty this score was earned on, e.g. "Normal".
+        score: The score to record.
+        file_path: Path to the JSON save file. Defaults to
+            :data:`HIGH_SCORE_FILE`; tests pass a temp path here to avoid
+            touching the real save file.
+
+    Returns:
+        ``True`` if ``score`` beat the previous best (or none existed yet)
+        and the file was updated; ``False`` if the existing high score was
+        kept because it was already greater than or equal to ``score``.
     """
     scores = load_high_scores(file_path)
     current_best = scores.get(difficulty)

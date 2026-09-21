@@ -96,7 +96,7 @@ Added a **High Score tracker** that persists across app restarts, saved to a loc
 
 ### Challenge 3: Professional Documentation and Linting
 
-<!-- filled in below once implemented -->
+Every function in `logic_utils.py` now has a Google-style docstring (Args/Returns, plus behavior notes like "truncates toward zero" or "missing file is treated as no scores yet"). Linted with `ruff check .` (config in `pyproject.toml`: pycodestyle `E`/`W`, pyflakes `F`, isort `I`, line length 88) — found and fixed an unsorted import block in `app.py` and `tests/test_game_logic.py`, and one line over 88 chars in `logic_utils.py`. See `ai_interactions.md` for the before/after linting output and prompts used.
 
 ### Challenge 4: Enhanced Game UI
 
