@@ -1,3 +1,9 @@
+import json
+import os
+
+HIGH_SCORE_FILE = "high_scores.json"
+
+
 def get_range_for_difficulty(difficulty: str):
     """Return (low, high) inclusive range for a given difficulty."""
     if difficulty == "Easy":
@@ -71,3 +77,37 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score - 5
 
     return current_score
+
+
+def load_high_scores(file_path: str = HIGH_SCORE_FILE) -> dict:
+    """Load per-difficulty high scores from a JSON file.
+
+    Returns an empty dict if the file doesn't exist yet or can't be parsed,
+    so a fresh install or a corrupted save never crashes the game.
+    """
+    if not os.path.exists(file_path):
+        return {}
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def save_high_score(difficulty: str, score: int, file_path: str = HIGH_SCORE_FILE) -> bool:
+    """Save `score` as the new high score for `difficulty` if it beats the
+    current one (or none exists yet).
+
+    Returns True if this was a new high score and the file was updated,
+    False otherwise.
+    """
+    scores = load_high_scores(file_path)
+    current_best = scores.get(difficulty)
+    if current_best is not None and score <= current_best:
+        return False
+
+    scores[difficulty] = score
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(scores, f, indent=2)
+    return True

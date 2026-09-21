@@ -92,7 +92,7 @@ tests/test_game_logic.py::test_extremely_large_guess_does_not_crash PASSED [100%
 
 ### Challenge 2: Feature Expansion
 
-<!-- filled in below once implemented -->
+Added a **High Score tracker** that persists across app restarts, saved to a local `high_scores.json` (gitignored — it's per-player runtime data, not source). `logic_utils.load_high_scores()`/`save_high_score()` handle the file I/O (missing/corrupt file → empty dict, never a crash); `app.py` shows the current best score for the selected difficulty in the sidebar ("🏆 High Score (Normal): 85") and calls `save_high_score()` right after a win, showing a "🏆 New high score!" banner when the player beats their previous best for that difficulty. See `ai_interactions.md` → Agent Workflow for how this was planned and implemented.
 
 ### Challenge 3: Professional Documentation and Linting
 

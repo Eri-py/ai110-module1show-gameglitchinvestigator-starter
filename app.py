@@ -5,7 +5,9 @@ from logic_utils import (
     OUTCOME_MESSAGES,
     check_guess,
     get_range_for_difficulty,
+    load_high_scores,
     parse_guess,
+    save_high_score,
     update_score,
 )
 
@@ -33,6 +35,15 @@ low, high = get_range_for_difficulty(difficulty)
 
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
+
+# Feature: High Score tracker (Challenge 2) -- best score per difficulty,
+# persisted to high_scores.json so it survives across app restarts.
+high_scores = load_high_scores()
+best_for_difficulty = high_scores.get(difficulty)
+st.sidebar.caption(
+    f"🏆 High Score ({difficulty}): "
+    f"{best_for_difficulty if best_for_difficulty is not None else '—'}"
+)
 
 if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
@@ -135,6 +146,8 @@ if submit:
                 f"You won! The secret was {st.session_state.secret}. "
                 f"Final score: {st.session_state.score}"
             )
+            if save_high_score(difficulty, st.session_state.score):
+                st.success(f"🏆 New high score for {difficulty}!")
         else:
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"

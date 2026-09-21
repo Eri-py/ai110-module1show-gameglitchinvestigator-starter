@@ -1,4 +1,11 @@
-from logic_utils import OUTCOME_MESSAGES, check_guess, parse_guess, update_score
+from logic_utils import (
+    OUTCOME_MESSAGES,
+    check_guess,
+    load_high_scores,
+    parse_guess,
+    save_high_score,
+    update_score,
+)
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
@@ -73,3 +80,22 @@ def test_extremely_large_guess_does_not_crash():
     assert guess == int(huge_guess)
     assert err is None
     assert check_guess(guess, 50) == "Too High"
+
+# --- High score tests (Challenge 2: Feature Expansion) ---
+
+def test_save_high_score_creates_file_and_returns_true_when_new(tmp_path):
+    file_path = str(tmp_path / "high_scores.json")
+    result = save_high_score("Normal", 80, file_path=file_path)
+    assert result is True
+    assert load_high_scores(file_path) == {"Normal": 80}
+
+def test_save_high_score_does_not_overwrite_with_a_lower_score(tmp_path):
+    file_path = str(tmp_path / "high_scores.json")
+    save_high_score("Normal", 80, file_path=file_path)
+    result = save_high_score("Normal", 50, file_path=file_path)
+    assert result is False
+    assert load_high_scores(file_path) == {"Normal": 80}
+
+def test_load_high_scores_returns_empty_dict_when_file_missing(tmp_path):
+    file_path = str(tmp_path / "does_not_exist.json")
+    assert load_high_scores(file_path) == {}
