@@ -64,4 +64,44 @@ tests\test_game_logic.py .......                                         [100%]
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional]
+### Challenge 1: Advanced Edge-Case Testing
+
+Three edge cases identified and tested (see `ai_interactions.md` for the prompts and reasoning behind each): a negative guess, a decimal guess, and an extremely large guess. All three are handled gracefully by the existing `parse_guess`/`check_guess` — no bugs found, but each is now locked in by a regression test in `tests/test_game_logic.py`.
+
+```
+$ pytest -v
+============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\eriol\Desktop\Projects\Foundations Of AI Engineering\ai110-module1show-gameglitchinvestigator-starter
+configfile: pyproject.toml
+collected 10 items
+
+tests/test_game_logic.py::test_winning_guess PASSED                      [ 10%]
+tests/test_game_logic.py::test_guess_too_high PASSED                     [ 20%]
+tests/test_game_logic.py::test_guess_too_low PASSED                      [ 30%]
+tests/test_game_logic.py::test_guess_too_low_regression_backwards_hint_bug PASSED [ 40%]
+tests/test_game_logic.py::test_update_score_win_awards_full_points_on_first_attempt PASSED [ 50%]
+tests/test_game_logic.py::test_update_score_too_high_always_costs_points PASSED [ 60%]
+tests/test_game_logic.py::test_hint_messages_match_their_outcome_direction PASSED [ 70%]
+tests/test_game_logic.py::test_negative_number_guess_is_handled_gracefully PASSED [ 80%]
+tests/test_game_logic.py::test_decimal_guess_truncates_toward_zero PASSED [ 90%]
+tests/test_game_logic.py::test_extremely_large_guess_does_not_crash PASSED [100%]
+
+============================= 10 passed in 0.01s ==============================
+```
+
+### Challenge 2: Feature Expansion
+
+<!-- filled in below once implemented -->
+
+### Challenge 3: Professional Documentation and Linting
+
+<!-- filled in below once implemented -->
+
+### Challenge 4: Enhanced Game UI
+
+<!-- filled in below once implemented -->
+
+### Challenge 5: AI Model Comparison
+
+See `ai_interactions.md` for the full comparison.

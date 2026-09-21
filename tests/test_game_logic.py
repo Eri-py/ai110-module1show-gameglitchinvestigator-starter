@@ -1,4 +1,4 @@
-from logic_utils import OUTCOME_MESSAGES, check_guess, update_score
+from logic_utils import OUTCOME_MESSAGES, check_guess, parse_guess, update_score
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
@@ -42,3 +42,34 @@ def test_hint_messages_match_their_outcome_direction():
     # (and vice versa), which is backwards advice on every single guess.
     assert "LOWER" in OUTCOME_MESSAGES["Too High"]
     assert "HIGHER" in OUTCOME_MESSAGES["Too Low"]
+
+# --- Edge-case tests (Challenge 1: Advanced Edge-Case Testing) ---
+
+def test_negative_number_guess_is_handled_gracefully():
+    # Edge case: a negative guess (e.g. "-5") should parse cleanly and
+    # compare correctly instead of crashing or being rejected outright --
+    # nothing in parse_guess/check_guess assumes the guess is non-negative.
+    ok, guess, err = parse_guess("-5")
+    assert ok is True
+    assert guess == -5
+    assert err is None
+    assert check_guess(-5, 50) == "Too Low"
+
+def test_decimal_guess_truncates_toward_zero():
+    # Edge case: a decimal guess is accepted via int(float(raw)), so "50.9"
+    # truncates to 50 (not rounded, not rejected as invalid input).
+    ok, guess, err = parse_guess("50.9")
+    assert ok is True
+    assert guess == 50
+    assert err is None
+
+def test_extremely_large_guess_does_not_crash():
+    # Edge case: Python ints are arbitrary precision, so a guess far larger
+    # than any normal secret should still parse and compare correctly
+    # instead of overflowing, raising, or silently misbehaving.
+    huge_guess = "9" * 30  # 999...9, 30 digits
+    ok, guess, err = parse_guess(huge_guess)
+    assert ok is True
+    assert guess == int(huge_guess)
+    assert err is None
+    assert check_guess(guess, 50) == "Too High"
