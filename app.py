@@ -5,6 +5,7 @@ import streamlit as st
 from logic_utils import (
     OUTCOME_MESSAGES,
     check_guess,
+    get_proximity_label,
     get_range_for_difficulty,
     load_high_scores,
     parse_guess,
@@ -63,6 +64,12 @@ if "status" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# Feature: Guess History summary table (Challenge 4) -- one row per valid
+# guess with its outcome and hot/cold proximity, separate from `history`
+# (which the Debug panel above uses and keeps raw, including invalid input).
+if "guess_log" not in st.session_state:
+    st.session_state.guess_log = []
+
 st.subheader("Make a guess")
 
 # FIX: Was hardcoded to "1 and 100" regardless of difficulty; now uses the
@@ -103,6 +110,7 @@ if new_game:
     st.session_state.score = 0
     st.session_state.status = "playing"
     st.session_state.history = []
+    st.session_state.guess_log = []
     st.session_state.secret = random.randint(low, high)
     st.success("New game started.")
     st.rerun()
@@ -130,9 +138,28 @@ if submit:
         # backwards hints. Now always compares guess vs. secret as ints — see
         # the FIX note in logic_utils.check_guess().
         outcome = check_guess(guess_int, st.session_state.secret)
+        proximity = get_proximity_label(guess_int, st.session_state.secret, low, high)
 
+        # Feature: color-coded hints + hot/cold proximity (Challenge 4).
+        # Direction (too high/low) is color-coded red/blue; proximity is a
+        # separate, purely presentational readout -- neither affects
+        # check_guess()'s outcome or update_score()'s scoring.
         if show_hint:
-            st.warning(OUTCOME_MESSAGES[outcome])
+            if outcome == "Too High":
+                st.error(OUTCOME_MESSAGES[outcome])
+            elif outcome == "Too Low":
+                st.info(OUTCOME_MESSAGES[outcome])
+            if outcome != "Win":
+                st.caption(f"Proximity: {proximity}")
+
+        st.session_state.guess_log.append(
+            {
+                "Attempt": st.session_state.attempts,
+                "Guess": guess_int,
+                "Outcome": outcome,
+                "Proximity": proximity,
+            }
+        )
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -157,6 +184,16 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+# Feature: session summary table (Challenge 4) -- every valid guess this
+# round, with its outcome and hot/cold proximity, newest first.
+if st.session_state.guess_log:
+    st.subheader("📊 This Session's Guesses")
+    st.dataframe(
+        list(reversed(st.session_state.guess_log)),
+        hide_index=True,
+        width="stretch",
+    )
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

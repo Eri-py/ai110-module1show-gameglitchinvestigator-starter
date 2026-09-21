@@ -124,6 +124,44 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
     return current_score
 
 
+def get_proximity_label(guess: int, secret: int, low: int, high: int) -> str:
+    """Classify how close a guess is to the secret as a "hot/cold" label.
+
+    Distance is measured as a fraction of the full guessing range
+    (``high - low``), so "hot" means proportionally close for the current
+    difficulty rather than close in absolute terms -- a miss by 2 is
+    scorching on Easy (range 1-20) but merely warm on Normal (1-100).
+    Purely presentational: it has no effect on scoring or win/loss and
+    does not replace :func:`check_guess`.
+
+    Args:
+        guess: The player's guess.
+        secret: The secret number.
+        low: The inclusive lower bound of the current difficulty's range.
+        high: The inclusive upper bound of the current difficulty's range.
+
+    Returns:
+        An emoji + label string, from ``"🔥 Blazing Hot!"`` (very close)
+        down to ``"🥶 Ice Cold"`` (far away). A guess equal to the secret
+        returns ``"🎯 Bullseye!"``.
+    """
+    if guess == secret:
+        return "🎯 Bullseye!"
+
+    span = high - low
+    ratio = abs(guess - secret) / span if span > 0 else 1.0
+
+    if ratio <= 0.02:
+        return "🔥 Blazing Hot!"
+    if ratio <= 0.05:
+        return "🥵 Hot"
+    if ratio <= 0.15:
+        return "😐 Warm"
+    if ratio <= 0.30:
+        return "🧊 Cool"
+    return "🥶 Ice Cold"
+
+
 def load_high_scores(file_path: str = HIGH_SCORE_FILE) -> dict:
     """Load per-difficulty high scores from a JSON file.
 

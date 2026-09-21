@@ -100,7 +100,15 @@ Every function in `logic_utils.py` now has a Google-style docstring (Args/Return
 
 ### Challenge 4: Enhanced Game UI
 
-<!-- filled in below once implemented -->
+Three additions, all purely presentational (no change to `check_guess`'s outcome or `update_score`'s scoring):
+
+- **Color-coded hints.** A "Too High" hint now renders in `st.error` (red); "Too Low" in `st.info` (blue) — previously both used the same neutral `st.warning`.
+- **Hot/cold proximity.** New `logic_utils.get_proximity_label(guess, secret, low, high)` classifies how close a guess is as a *fraction of the current difficulty's range* (so a miss-by-2 is scorching on Easy's 1–20 range but lukewarm on Normal's 1–100) — from `"🔥 Blazing Hot!"` down to `"🥶 Ice Cold"`, or `"🎯 Bullseye!"` on a win. Shown as a caption under each hint.
+- **Session summary table.** Every valid guess this round is appended to `st.session_state.guess_log` (attempt #, guess, outcome, proximity) and rendered as a table (`st.dataframe`) under "📊 This Session's Guesses", newest guess first.
+
+Relevant code: `get_proximity_label` in `logic_utils.py`; the hint/proximity/`guess_log` block inside `app.py`'s `if submit:` handler; the summary table just above the footer divider.
+
+Verified with Streamlit's `AppTest` framework (`streamlit.testing.v1.AppTest`) rather than just eyeballing it: scripted a full round (submit a wrong guess, then the winning guess) and asserted no exception was raised at either step. This caught a real issue on the first pass — `st.dataframe(..., use_container_width=True)` is deprecated in the installed Streamlit version (1.60) and printed a removal warning; switched to `width="stretch"`, the current equivalent, before re-verifying clean.
 
 ### Challenge 5: AI Model Comparison
 

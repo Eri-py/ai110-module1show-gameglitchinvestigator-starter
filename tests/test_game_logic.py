@@ -1,6 +1,7 @@
 from logic_utils import (
     OUTCOME_MESSAGES,
     check_guess,
+    get_proximity_label,
     load_high_scores,
     parse_guess,
     save_high_score,
@@ -100,3 +101,18 @@ def test_save_high_score_does_not_overwrite_with_a_lower_score(tmp_path):
 def test_load_high_scores_returns_empty_dict_when_file_missing(tmp_path):
     file_path = str(tmp_path / "does_not_exist.json")
     assert load_high_scores(file_path) == {}
+
+# --- Proximity/"hot-cold" tests (Challenge 4: Enhanced Game UI) ---
+
+def test_proximity_label_exact_match_is_bullseye():
+    assert get_proximity_label(50, 50, low=1, high=100) == "🎯 Bullseye!"
+
+def test_proximity_label_close_guess_is_hot():
+    # On a 1-100 range, missing by 1 is a 1% distance -- well within "hot".
+    label = get_proximity_label(51, 50, low=1, high=100)
+    assert "Hot" in label
+
+def test_proximity_label_far_guess_is_cold():
+    # On a 1-100 range, missing by 90 is a 90% distance -- as cold as it gets.
+    label = get_proximity_label(95, 5, low=1, high=100)
+    assert "Cold" in label
