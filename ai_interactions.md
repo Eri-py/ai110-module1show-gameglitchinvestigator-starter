@@ -93,17 +93,15 @@ All checks passed!
 
 > Compare two AI models on the same task.
 
-**Task given to both models:**
+Note on methodology: I don't have direct access to ChatGPT/Gemini/Copilot from inside this coding session, so per the assignment's own "e.g." wording ("Claude vs. Gemini, or ChatGPT vs. Copilot") I compared two different Claude models instead -- Sonnet 5 (used for the whole project) and Haiku 4.5 (spawned as an independent sub-agent). This is a fair comparison of the actual underlying models, not a re-run of the same one. Caveat: Haiku was given only the original buggy `check_guess` code and its caller, not the project's test file (`tests/test_game_logic.py`), so its answer wasn't optimizing for that specific contract the way Sonnet's (already-committed) fix was -- noted below where it matters.
 
-<!-- Describe what you asked each model to do -->
+**Task given to both models:** the exact original buggy code -- `check_guess()` (returning `(outcome, message)` tuples, with the `try/except TypeError` fallback) plus its caller (the `attempts % 2` block that casts `secret` to `str` on even attempts) -- with the prompt: "the hint is sometimes backwards; find the root cause, fix it, and explain why it happened."
 
 | | Model A | Model B |
 |-|---------|---------|
-| **Model name** | | |
-| **Response summary** | | |
-| **More Pythonic?** | | |
-| **Clearer explanation?** | | |
+| **Model name** | Claude Sonnet 5 (this session, already applied as the project's actual fix) | Claude Haiku 4.5 (spawned as a sub-agent with only the buggy snippet, no other project context) |
+| **Response summary** | Removed the `str(secret)` cast from the caller entirely (always compares as `int`), and simplified `check_guess` to return a bare outcome string (`"Win"`/`"Too High"`/`"Too Low"`) with message text split into a separate `OUTCOME_MESSAGES` dict -- required because `tests/test_game_logic.py` asserts `check_guess(60, 50) == "Too High"`, a bare string, not a tuple. | Correctly diagnosed the same root cause (lexicographic vs. numeric comparison), and offered two fixes: a primary one that keeps the original `(outcome, message)` tuple shape but adds an `isinstance(secret, str)` check with a `try/except ValueError` to coerce it back to `int` inside `check_guess` (plus a new, previously-nonexistent `"Error"` outcome for the ValueError case); and an "even better" secondary suggestion to just stop casting `secret` to `str` in the caller in the first place -- which matches what Sonnet actually did. |
+| **More Pythonic?** | Sonnet's, by a clear margin. It trusts the caller's guarantee that `guess`/`secret` are always ints (true everywhere in this codebase) instead of defensively re-validating inside `check_guess` for a case that can't actually occur -- 4 lines of straight-line comparison logic, no `try/except`, no `isinstance`. | Haiku's *primary* fix adds defensive type-coercion and a speculative new `"Error"` outcome for a scenario (a non-numeric secret string) that never happens given how the secret is actually generated (`random.randint`) -- unnecessary complexity for dead code. Its *secondary* suggestion, though, is exactly as clean as Sonnet's. |
+| **Clearer explanation?** | Verified claims empirically rather than just asserting them -- e.g. ran `'9' > '10'` in the interpreter to confirm the lexicographic-comparison claim, and re-ran the exact broken input through the fixed code to show the corrected output (see section 2 above). | Very clear on its own terms -- walked through concrete examples (`"5" > "50"` is `True` alphabetically vs. `5 > 50` is `False` numerically) directly in the explanation, which is an effective way to make the bug's mechanism obvious without needing a REPL. Slight edge to Haiku for packing the "aha" moment directly into prose. |
 
-**Which did you prefer and why?**
-
-<!-- Your conclusion -->
+**Which did you prefer and why?** Sonnet's actual fix, mainly because it happens to match the project's real constraints (the bare-string test contract) that Haiku wasn't given -- an advantage of context, not raw capability. On the code-quality question alone, judging each model's *best* answer (Haiku's secondary suggestion, since it's the one worth adopting), the two models converged on the identical minimal fix: stop mutating `secret`'s type in the caller and keep `check_guess` a pure numeric comparison. That convergence is itself the most interesting result -- both models correctly identified that removing the buggy cast at its source beats patching around it with more type-checking inside the callee, but only Sonnet's answer was actually validated end-to-end against this repo's test suite and live app rather than reasoned about in isolation.
