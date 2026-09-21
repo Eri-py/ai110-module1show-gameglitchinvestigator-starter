@@ -28,29 +28,39 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] **Purpose:** A Streamlit number-guessing game — pick a difficulty, guess the secret number within a limited number of attempts, and score points based on how quickly you find it.
+- [x] **Bugs found:** see `reflection.md` § 1 for the full write-up and reproduction table. In short: the "Too High"/"Too Low" hint *messages* were swapped relative to their own outcome labels (wrong on every guess), a separate string-vs-int comparison bug could additionally mislabel the outcome itself on top of that, "New Game" never reset the win/loss status so the app got permanently stuck after one round, players got one fewer attempt than the sidebar advertised (an off-by-one in the attempt counter), the guess-range prompt and "New Game" ignored the selected difficulty, and the win-score formula was off by one attempt's worth of points.
+- [x] **Fixes applied:** moved `get_range_for_difficulty`, `parse_guess`, `check_guess`, and `update_score` into `logic_utils.py`; swapped the inverted `OUTCOME_MESSAGES` so "Too High" tells you to go lower and vice versa; removed the `str(secret)` cast that could mislabel the outcome, so guesses are always compared numerically; had "New Game 🔁" reset `status`, `score`, `history`, and reseed the secret from the *current* difficulty's range instead of a hardcoded 1–100; started `attempts` at `0` instead of `1` so the attempt count matches what's displayed; made the guess-range prompt use the actual `low`/`high` for the selected difficulty; and fixed `update_score`'s win formula (`100 - 10 * attempt_number`, no extra `+1`) and made "Too High" always cost points instead of occasionally rewarding a wrong guess.
 
 ## 📸 Demo Walkthrough
 
-Describe your fixed game in numbered steps so a reader can follow along without watching a video:
+Describe your fixed game in numbered steps so a reader can follow along without watching a video. Sample game on Normal difficulty (range 1–100, 8 attempts), secret = 63:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Start the app (`streamlit run app.py`), select **Normal** difficulty. Sidebar shows "Range: 1 to 100" and "Attempts allowed: 8". Debug panel confirms the secret is `63`.
+2. User enters a guess of `40` → Game returns **"Too Low"** with the hint "📈 Go HIGHER!" (direction now correct). Score: `-5`.
+3. User enters a guess of `70` → **"Too High"** with the hint "📉 Go LOWER!" (previously this said "Go HIGHER!", which was backwards). Score: `-10`.
+4. User enters a guess of `63` → **"Win"**. Balloons fire, score updates to `-10 + (100 - 10 × 3) = 60`, and the app shows "You won! The secret was 63. Final score: 60."
+5. Any further guess is blocked with "You already won. Start a new game to play again." instead of silently accepting more input.
+6. User clicks **"New Game 🔁"** → status resets to "playing", score resets to `0`, attempts reset to `0`, and a brand-new secret is drawn from the Normal range (1–100) — the game is immediately playable again instead of staying stuck on the win screen.
 
 **Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
 
 ## 🧪 Test Results
 
 ```
-# Paste your pytest output here, e.g.:
-# pytest tests/
-# ========================= X passed in 0.XXs =========================
+$ pytest
+============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\eriol\Desktop\Projects\Foundations Of AI Engineering\ai110-module1show-gameglitchinvestigator-starter
+configfile: pyproject.toml
+collected 7 items
+
+tests\test_game_logic.py .......                                         [100%]
+
+============================== 7 passed in 0.01s ==============================
 ```
+
+7 tests: the 3 starter tests plus 4 regression tests added while fixing bugs — one per bug fixed (backwards outcome classification, win-score off-by-one, "Too High" wrongly rewarding a bad guess, and the inverted hint-message direction).
 
 ## 🚀 Stretch Features
 
